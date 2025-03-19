@@ -1,5 +1,5 @@
 ---
-title: "2024 Infodengue Sprint"
+title: "2025 Infodengue Sprint"
 output: html_notebook
 ---
 
