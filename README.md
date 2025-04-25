@@ -1,6 +1,6 @@
 # 2025 Infodengue-Mosqlimate dengue Forecast Sprint
 <p align="center">
-  <img src="sprint.jpeg" alt="Sprint Planning" width="400" height="400">
+  <img src="img/sprint.jpeg" alt="Sprint Planning" width="400" height="400">
 </p>
 
 ## Registering in the Mosqlimate Platform
@@ -20,7 +20,7 @@ This github repository should be used as a template for developing your submissi
 
 If you have a GitHub account, you can create a new public repository clicking the (+) button on the top right of this page. In the following page, you can create the repo under your user as shown below, make sure to use our template as indicated by the red arrow in the figure below. You can name your repository any way you like, we recommend a name easy to remember!
 
-![create repo](/repo_creation.png)
+![create repo](/img/repo_creation.png)
 
 Don't forget to set it as a public repository!
 
