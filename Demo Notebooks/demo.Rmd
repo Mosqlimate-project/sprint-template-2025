@@ -24,7 +24,7 @@ Now it is time to install the mosqlient
 ```{r}
 # un/comment if you need to install them
 library(reticulate)
-#py_install("mosqlient>=1.2.2", envname='r-reticulate')
+#py_install("mosqlient>=1.9.2", envname='r-reticulate')
 mosq <- import("mosqlient")
 ```
 
@@ -56,9 +56,9 @@ head(data)
 ```
 
 
-Let's for the sake of this example fit the dengue series for the state of Distrito Federal (UF="DF"). For this we need to aggregate the cases from all 92 municipalities of the state.
+Let's for the sake of this example fit the dengue series for the state of Distrito Federal (UF="DF").
 
-The first challenge is to forecast 22/23 season using previous data. 
+The first challenge is to forecast 23/24 season using previous data. 
 
 ```{r}
 dDF.train <- data %>%
@@ -93,7 +93,7 @@ dDF.target <- dDF.target %>%
 
 ```
 
-## Creating a Proohet forecast model for the challenge
+## Creating a Prophet forecast model for the challenge
 
 For this demonstration we will train an Prophet model. 
 
@@ -144,7 +144,7 @@ You need your API key, to get it, see the instructions in the github readme.
 ```{r}
 library(httr)
 url <- "https://api.mosqlimate.org/api/registry/models/"
-key = c("ZuilhoSe:bbfa2e47-c0d8-4b8f-999d-5ab596d7ec25")
+key = c("your-key")
 names(key) <- 'X-UID-Key'
 model <- list(
     name = "Prophet R Example",
@@ -213,7 +213,7 @@ mosq$upload_prediction(
     predict_date="2025-05-08",
     prediction=df_forecast,
     adm_1="DF",
-    api_key="ZuilhoSe:bbfa2e47-c0d8-4b8f-999d-5ab596d7ec25"
+    api_key="your-key"
 )
 ```
 
