@@ -1,8 +1,7 @@
-# 2024 Infodengue-Mosqlimate dengue Forecast Sprint
-![sprint](sprint.jpeg)
-
-# ATTENTION!!
-The [results](scores/scores.md) for the 2024 sprint are out! Check them out to see how your team did!
+# 2025 Infodengue-Mosqlimate dengue Forecast Sprint
+<p align="center">
+  <img src="img/sprint.jpeg" alt="Sprint Planning" width="400" height="400">
+</p>
 
 ## Registering in the Mosqlimate Platform
 The Mosqlimate Platform is responsible for all interactions with the the participants of this sprint, including getting the data and uploading predictions. Therefore, to participate in this sprint, the first step we require from you, as team leader, is to register your team to the Mosqlimate platform (There is not cost associate with this membership). In order to to this, simply go to [api.mosqlimate.org](https://api.mosqlimate.org/), click on the "Login with GitHub" in the top right corner of the page, and follow the instructions. Once you create your Mosqlimate profile, you are set to follow the steps below.
@@ -17,11 +16,11 @@ Now let's move on to setting up the GitHub repository for your submission.
 
 
 ## Using the GitHub template for the Infodengue Sprint submission
-This github repository should be used as a template for developing your submission for the 2024 Infodengue Sprint. To know about the challenge, please read carefully [the call](https://docs.google.com/document/d/1KL3ngVuF2HwNSxswd0jqKeJun9eoYGsvzuaq_eF8NAI/edit?usp=sharing). 
+This github repository should be used as a template for developing your submission for the 2025 Infodengue Sprint. To know about the challenge, please read carefully [the call](https://docs.google.com/document/d/13HVTIt4t1zeEnDWAPkYX0GMdrvNQBAS8_IBsMZiSBPU/edit?tab=t.0#heading=h.afqkljpyycvh). 
 
 If you have a GitHub account, you can create a new public repository clicking the (+) button on the top right of this page. In the following page, you can create the repo under your user as shown below, make sure to use our template as indicated by the red arrow in the figure below. You can name your repository any way you like, we recommend a name easy to remember!
 
-![create repo](/repo_creation.png)
+![create repo](/img/repo_creation.png)
 
 Don't forget to set it as a public repository!
 
