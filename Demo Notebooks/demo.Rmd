@@ -1,6 +1,10 @@
 ---
 title: "2025 Infodengue Sprint"
-output: html_notebook
+output:
+  html_document:
+    df_print: paged
+  html_notebook: default
+  pdf_document: default
 ---
 
 This script shows how to fit a Prophet forecast model to the dengue data and upload it to 
@@ -217,4 +221,8 @@ mosq$upload_prediction(
 )
 ```
 
-If you get a 201 status on this submission, it means you are done! Congratulations!
+If everything worked, now you will be able to visualize your predictions in the [Mosqlient Dashboard](https://api.mosqlimate.org/vis/dashboard/?dashboard=sprint) under the "Sprint 2024/25" tab:
+
+![Dashboard](../img/R_dashboard_viz.png)
+> Hint: if you want to see the predictions confidence intervals, you can click on the desired curve.
+
