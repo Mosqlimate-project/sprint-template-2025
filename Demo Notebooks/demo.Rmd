@@ -3,7 +3,7 @@ title: "2025 Infodengue Sprint"
 output: html_notebook
 ---
 
-This script shows how to fit a simple forecast model to the dengue data and upload it to 
+This script shows how to fit a Prophet forecast model to the dengue data and upload it to 
 the Mosqlimate platform. Your job is to do better than this model!  
 
 ## Getting the system ready
@@ -15,6 +15,7 @@ interface. To run the commands, the reticulate library is required.
 # un/comment if you need to install these libraries
 #install.packages('pak') # useful for installing reticulate
 library(pak)
+library(dplyr)
 #pak::pak("rstudio/reticulate")
 ```
 
@@ -38,76 +39,100 @@ The dengue data is provided by week and by municipality.
 
 ```{r, results='hide'}
 library(data.table)
-data <- fread("~/Data/sprint/dengue.csv.gz")
+data <- fread("~/GitHub/sprint-template-2025/Demo Notebooks/dengue.csv.gz")
 ```
+We begin defining the interval dates:
+
+```{r}
+# define date based on start date of week number
+start_date <- as.Date("2023-06-18")
+for_date <- as.Date("2023-10-08")
+```
+
+
 
 ```{r}
 head(data)
 ```
 
 
-Let's for the sake of this example fit the dengue series for the state of Rio de Janeiro (UF="RJ"). For this we need to aggregate the cases from all 92 municipalities of the state.
+Let's for the sake of this example fit the dengue series for the state of Distrito Federal (UF="DF"). For this we need to aggregate the cases from all 92 municipalities of the state.
 
 The first challenge is to forecast 22/23 season using previous data. 
 
 ```{r}
-dRJ.train <- data %>%
-  filter(train_1) %>%
-  filter(uf == "RJ") %>% 
+dDF.train <- data %>%
+  filter(date <= start_date) %>%
+  filter(uf == "DF") %>% 
   group_by(date) %>% 
   summarize(casos=sum(casos)) %>% 
   arrange(date)
+
+# Renaming the columns and applying log transformation
+dDF.train <- dDF.train %>%
+  rename(ds = date, y = casos) %>%
+  mutate(ds = as.Date(ds)) %>%
+  select(ds, y) %>%
+  mutate(y = log(y + 1))
 ```
 
 ```{r}
-dRJ.target <- data %>%
-  filter(target_1) %>%
-  filter(uf == "RJ") %>% 
+dDF.target <- data %>%
+  filter(date >= for_date) %>%
+  filter(uf == "DF") %>% 
   group_by(date) %>% 
   summarize(casos=sum(casos)) %>% 
   arrange(date)
+
+# Renaming the columns
+dDF.target <- dDF.target %>%
+  rename(ds = date, y = casos) %>%
+  mutate(ds = as.Date(ds)) %>%
+  select(ds, y) %>%
+  mutate(y = log(y + 1))
+
 ```
 
-## Creating a simple forecast model for the challenge 1
+## Creating a Proohet forecast model for the challenge
 
-For this demonstration we will train an ARIMA model. 
+For this demonstration we will train an Prophet model. 
 
 ```{r, results='hide'}
 library(forecast)
 library(tidyverse)
 library(ggplot2)
+library(prophet)
 ```
-
-First, creating time series objects
+We begin fitting the model:
 
 ```{r}
-ts.train <- ts(dRJ.train$casos, start = c(2010, 01), frequency = 52)
-ts.target <- ts(dRJ.target$casos, start = c(2022, 41), frequency = 52)
+model <- prophet(dDF.train, weekly.seasonality=TRUE)
 ```
 
-Plotting the challenge
+Creating tibble with predictions dates
 
 ```{r}
-autoplot(ts.train, colour="blue", xlim = as.Date(c("2010-01-01","2023-10-01")))+
-  autolayer(ts.target)  
-
+future <- make_future_dataframe(model, periods = 68, freq = "week")
+tail(future)
 ```
 
-Training the (very bad) arima model
+Making insample predictions:
 
 ```{r}
-fit.train = auto.arima(ts.train)
-summary(fit.train)
+forecast_insample <- future %>%
+  filter(ds <= start_date)
+
+forecast <- predict(model, forecast_insample)
+head(forecast)
 ```
+
 ```{r}
-autoplot(forecast(fit.train,h=52))+
-autolayer(ts.train) + 
-  autolayer(ts.target)
+plot(model, forecast)
 ```
 
 ## Preparing the output for uploading
 
-First, register your model in the platform:
+First, register your model in the platform. If you have already done this, you can skip this step.
 
 ```{r}
 library(reticulate)
@@ -119,78 +144,76 @@ You need your API key, to get it, see the instructions in the github readme.
 ```{r}
 library(httr)
 url <- "https://api.mosqlimate.org/api/registry/models/"
-key = c("your key")
+key = c("ZuilhoSe:bbfa2e47-c0d8-4b8f-999d-5ab596d7ec25")
 names(key) <- 'X-UID-Key'
 model <- list(
-    name = "autoarima",
-    description = "demo",
-    repository = "https://github.com/Mosqlimate-project/sprint-template/",
+    name = "Prophet R Example",
+    description = "test model for 2025 sprint test model for 2025 sprint test model for 2025 sprint test model for 2025 sprint",
+    repository = "https://github.com/Mosqlimate-project/sprint-template-2025/",
     implementation_language = "R",
     disease = "dengue",  
     spatial = FALSE,
     temporal = TRUE,
     categorical = FALSE,
     ADM_level = 1,
-    time_resolution = "week"
+    time_resolution = "week",
+    sprint = TRUE
   )
 response <- POST(url, body = model, add_headers(.headers=key),  encode = "json")
 response
 ```
 
-
 Now, to register your prediction, you need: 
-1. the id number of your model, see instructions in the github readme
+1. the id number of your model
 2. dataframe with the following columns: 
 
 date(YYYY-mm-dd): same used in the dataset
-preds (num): point estimates
-lower (num): 95% lower interval
-upper (num): 95% upper interval
+pred (num): point estimates
+lower_95 (num): 95% lower interval
+lower_90 (num): 90% lower interval
+lower_80 (num): 80% lower interval
+lower_50 (num): 50% lower interval
+upper_50 (num): 50% upper interval
+upper_80 (num): 80% upper interval
+upper_90 (num): 90% upper interval
+upper_95 (num): 95% upper interval
 adm_1 (two letters string): UF code (example: "RJ")
-adm_2: NA  
-adm_3: NA
 
 
 ```{r}
-uf = "RJ"  # change that accordingly to your data
-x <- data.frame(forecast(fit.train,h=52))[,c("Point.Forecast","Lo.95","Hi.95")] 
-x <- x %>%
-  mutate(dates = as.Date(date_decimal(as.numeric(row.names(x)))),
-         adm_1 = uf, 
-         adm_2 = NA,
-         adm_0 = NA) %>%
-  select(dates, 
-         preds = Point.Forecast,
-         lower = Lo.95,
-         upper = Hi.95,
-         adm_1,
-         adm_2,
-         adm_0) %>%
-  remove_rownames()
+# predict out sample data
+forecast_outsample <- future %>%
+  filter(ds >= for_date)
 
-head(x)
+samples <- predictive_samples(model, forecast_outsample)
+yhat_samples <- samples$yhat
+
+# Calculate the percentiles
+percentiles <- c(0.025, 0.05, 0.10, 0.25, 0.50, 0.75, 0.90, 0.95, 0.975)
+quantis_log <- t(apply(yhat_samples, 1, quantile, probs = percentiles))
+quantis <- expm1(quantis_log)
+
+# transform dataframe
+df_forecast <- as.data.frame(quantis)
+colnames(df_forecast) <- c("lower_95", "lower_90", "lower_80", "lower_50",
+                           "pred", "upper_50", "upper_80", "upper_90", "upper_95")
+df_forecast$date <- as.Date(forecast_outsample$ds)
+df_forecast$adm_1 <- "DF"
+
+head(df_forecast)
 ```
-
-Converting to JSON
-
-```{r}
-library(jsonlite)
-
-y <- toJSON(x, na='string')
-y
-```
-
 
 Now, to upload the prediction we will use the `mosqlient` library to handle the POST, instead of the way we did for the model's registration. This will make things substantially easier. For this step you need your *model's id number* found in your profile page in the mosqlimate API website, and collect the commit number of the version of the code at the time of the prediction's generation. 
 
 ```{r}
 mosq$upload_prediction(
-    model_id=15,
-    description="arima forecast for RJ",
-    commit="505d1b01a5d9ae59a62e635224244c93eef1a466",
-    predict_date="2024-06-25",
-    prediction=y,
-    api_key="your key"
+    model_id=94,
+    description="test for sprint 2025 preds of the Prophet model in DF in R",
+    commit="df1c695eaa5af5edb125a9d4ec72a4d2528c7411",
+    predict_date="2025-05-08",
+    prediction=df_forecast,
+    adm_1="DF",
+    api_key="ZuilhoSe:bbfa2e47-c0d8-4b8f-999d-5ab596d7ec25"
 )
 ```
 
