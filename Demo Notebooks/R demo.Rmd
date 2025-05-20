@@ -35,8 +35,7 @@ mosq <- import("mosqlient")
 
 ## Reading the data
 
-To access the data go to info.dengue.mat.br/minio, with your credentials and 
-download the datasets. They are gzip compressed csv files. Here, we will use only
+The data are available for downloading [here](https://sprint.mosqlimate.org/data/). They are gzip compressed csv files. Here, we will use only
 the disease data.  
 
 The dengue data is provided by week and by municipality. 
@@ -53,12 +52,9 @@ start_date <- as.Date("2023-06-18")
 for_date <- as.Date("2023-10-08")
 ```
 
-
-
 ```{r}
 head(data)
 ```
-
 
 Let's for the sake of this example fit the dengue series for the state of Distrito Federal (UF="DF").
 
