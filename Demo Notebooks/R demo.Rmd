@@ -155,8 +155,6 @@ upper_50 (num): 50% upper interval
 upper_80 (num): 80% upper interval
 upper_90 (num): 90% upper interval
 upper_95 (num): 95% upper interval
-adm_1 (two letters string): UF code (example: "RJ")
-
 
 ```{r}
 # predict out sample data
@@ -176,7 +174,6 @@ df_forecast <- as.data.frame(quantis)
 colnames(df_forecast) <- c("lower_95", "lower_90", "lower_80", "lower_50",
                            "pred", "upper_50", "upper_80", "upper_90", "upper_95")
 df_forecast$date <- as.Date(forecast_outsample$ds)
-df_forecast$adm_1 <- "DF"
 
 head(df_forecast)
 ```
