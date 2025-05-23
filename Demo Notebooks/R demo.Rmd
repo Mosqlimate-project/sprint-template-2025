@@ -18,20 +18,33 @@ interface. To run the commands, the reticulate library is required.
 ```{r}
 # un/comment if you need to install these libraries
 #install.packages('pak') # useful for installing reticulate
+library(reticulate)
 library(pak)
-library(dplyr)
-#pak::pak("rstudio/reticulate")
+library(prophet)
+library(data.table)
+library(tidyverse)
+library(epitools)
+pak::pak("rstudio/reticulate")
+```
+
+```{r}
+py_config()
+```
+
+Get your API_KEY:
+
+```{r}
+API_KEY =  'X-UID-Key'
 ```
 
 Now it is time to install the mosqlient
 
 ```{r}
 # un/comment if you need to install them
-library(reticulate)
-#py_install("mosqlient>=1.9.2", envname='r-reticulate')
+#py_install("mosqlient>=1.9.3")
+py_require(c("mosqlient>=1.9.3"))
 mosq <- import("mosqlient")
 ```
-
 
 ## Reading the data
 
@@ -43,17 +56,21 @@ The dengue data is provided by week and by municipality.
 ```{r, results='hide'}
 library(data.table)
 data <- fread("~/GitHub/sprint-template-2025/Demo Notebooks/dengue.csv.gz")
+head(data)
 ```
+
+## Creating a Prophet forecast model for the challenge
+
+For this demonstration we will train an Prophet model. 
+
 We begin defining the interval dates:
 
 ```{r}
 # define date based on start date of week number
-start_date <- as.Date("2023-06-18")
-for_date <- as.Date("2023-10-08")
-```
-
-```{r}
-head(data)
+end_date_train <- as.Date("2023-06-18") # epiweek 25
+#print(epiweek(end_date_train))
+start_for_date <- as.Date("2023-10-08") # epiweek 41
+#print(epiweek(start_for_date))
 ```
 
 Let's for the sake of this example fit the dengue series for the state of Distrito Federal (UF="DF").
@@ -62,7 +79,7 @@ The first challenge is to forecast 23/24 season using previous data.
 
 ```{r}
 dDF.train <- data %>%
-  filter(date <= start_date) %>%
+  filter(date <= end_date_train) %>%
   filter(uf == "DF") %>% 
   group_by(date) %>% 
   summarize(casos=sum(casos)) %>% 
@@ -76,33 +93,6 @@ dDF.train <- dDF.train %>%
   mutate(y = log(y + 1))
 ```
 
-```{r}
-dDF.target <- data %>%
-  filter(date >= for_date) %>%
-  filter(uf == "DF") %>% 
-  group_by(date) %>% 
-  summarize(casos=sum(casos)) %>% 
-  arrange(date)
-
-# Renaming the columns
-dDF.target <- dDF.target %>%
-  rename(ds = date, y = casos) %>%
-  mutate(ds = as.Date(ds)) %>%
-  select(ds, y) %>%
-  mutate(y = log(y + 1))
-
-```
-
-## Creating a Prophet forecast model for the challenge
-
-For this demonstration we will train an Prophet model. 
-
-```{r, results='hide'}
-library(forecast)
-library(tidyverse)
-library(ggplot2)
-library(prophet)
-```
 We begin fitting the model:
 
 ```{r}
@@ -112,7 +102,7 @@ model <- prophet(dDF.train, weekly.seasonality=TRUE)
 Creating tibble with predictions dates
 
 ```{r}
-future <- make_future_dataframe(model, periods = 68, freq = "week")
+future <- make_future_dataframe(model, periods = 67, freq = "week")
 tail(future)
 ```
 
@@ -120,46 +110,35 @@ Making insample predictions:
 
 ```{r}
 forecast_insample <- future %>%
-  filter(ds <= start_date)
+  filter(ds <= end_date_train)
 
 forecast <- predict(model, forecast_insample)
-head(forecast)
-```
 
-```{r}
 plot(model, forecast)
 ```
 
 ## Preparing the output for uploading
 
 First, register your model in the platform. If you have already done this, you can skip this step.
-
-```{r}
-library(reticulate)
-mosq <- import("mosqlient")
-```
-
 You need your API key, to get it, see the instructions in the github readme.
 
 ```{r}
-library(httr)
-url <- "https://api.mosqlimate.org/api/registry/models/"
-key = c("your-key")
-names(key) <- 'X-UID-Key'
-model <- list(
-    name = "Prophet R Example",
-    description = "test model for 2025 sprint test model for 2025 sprint test model for 2025 sprint test model for 2025 sprint",
-    repository = "https://github.com/Mosqlimate-project/sprint-template-2025/",
-    implementation_language = "R",
-    disease = "dengue",  
-    spatial = FALSE,
-    temporal = TRUE,
-    categorical = FALSE,
-    ADM_level = 1,
-    time_resolution = "week",
-    sprint = TRUE
-  )
-response <- POST(url, body = model, add_headers(.headers=key),  encode = "json")
+
+response = mosq$upload_model(
+    api_key=API_KEY,
+    name="Prophet R Example",
+    description="test model for 2025 in R",
+    repository="https://github.com/Mosqlimate-project/sprint-template-2025/",
+    implementation_language="R",
+    disease= "dengue",
+    temporal= TRUE,
+    spatial=FALSE,
+    categorical=FALSE,
+    adm_level=1,
+    time_resolution="week",
+    sprint=TRUE
+)
+
 response
 ```
 
@@ -183,9 +162,9 @@ adm_1 (two letters string): UF code (example: "RJ")
 ```{r}
 # predict out sample data
 forecast_outsample <- future %>%
-  filter(ds >= for_date)
+  filter(ds >= start_for_date)
 
-samples <- predictive_samples(model, forecast_outsample)
+samples <- prophet::predictive_samples(model, forecast_outsample)
 yhat_samples <- samples$yhat
 
 # Calculate the percentiles
