@@ -54,7 +54,6 @@ the disease data.
 The dengue data is provided by week and by municipality. 
 
 ```{r, results='hide'}
-library(data.table)
 data <- fread("~/GitHub/sprint-template-2025/Demo Notebooks/dengue.csv.gz")
 head(data)
 ```
