@@ -61,7 +61,7 @@ To install the library for Python, from the OS terminal type:
 $ pip install -U mosqlient
 ```
 
-Ensure your Python version is 3.10 or higher, but lower than 3.13 to install the latest version of the package (1.9.2).
+Ensure your Python version is 3.10 or higher, but lower than 3.13 to install the latest version of the package (1.9.3).
 
 for R:
 
